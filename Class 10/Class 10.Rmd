@@ -1,0 +1,130 @@
+---
+title: "Class 10"
+author: "Varsha Rajesh"
+date: "2/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Analysis of Human Breast Cancer Cells
+
+Import the input data (csv file). 
+```{r}
+wisc.df <- read.csv("https://bioboot.github.io/bimm143_W18/class-material/WisconsinCancer.csv")
+wisc.data <- as.matrix(wisc.df[, 3:32])
+row.names(wisc.data) <- wisc.df$id
+diagnosis <- as.numeric(wisc.df$diagnosis)
+diagnosis
+#Here, we imported the data set into a data frame, then made a new matrix where we got rid of the ID and diagnosis variables, and deleted the last coloumn (a mistake in the original data sheet).
+```
+
+> Q1. How many patients do we have data for?
+
+```{r}
+nrow(wisc.data)
+```
+
+> Q2. How many of the observations have a malignant diagnosis?
+
+```{r}
+table(wisc.df$diagnosis)
+```
+> Q3. How many variables/features in the data are fixed with _mean?
+
+```{r}
+length(grep("_mean", colnames(wisc.data), value = TRUE))
+
+```
+
+## Principal Component Analysis of imported data
+We need to scale the data before we do PCA. Two common reasons for scaling data include:
+
+The input variables use different units of measurement.
+The input variables have significantly different variances.
+```{r}
+round(apply(wisc.df, 2, sd), 2)
+```
+We need to set scale = TRUE.
+
+```{r}
+wisc.pr <- prcomp(wisc.data, scale = TRUE)
+summary(wisc.pr)
+```
+
+> Q4. From your results, what proportion of the original variance is captured by the first principal components (PC1)?
+
+PC1 captures 44.27% of the original variance.
+
+> Q2. How many principal components (PCs) are required to describe at least 70% of the original variance in the data?
+
+The first three PCs capture about 73% of the variance together.
+
+> Q6. How many principal components (PCs) are required to describe at least 90% of the original variance in the data?
+
+Interpreting PCA Results
+```{r}
+biplot(wisc.pr)
+```
+
+This plot is very bad, let's make another one.
+
+```{r}
+attributes(wisc.pr)
+plot(wisc.pr$x[,1], wisc.pr$x[,2])
+```
+
+```{r}
+plot(wisc.pr$x[,1], wisc.pr$x[,2], col = wisc.df$diagnosis, xlab = "PC1", ylab = "PC2")
+```
+The plot shows that all the benign cells tend to be more like each other (cluster closer together on the PCA plot), whereas malignant cells are also close together somewhat but also have differences from each other, considering they are somewhat spread apart as compared to the benign cells.
+
+## Cluster in PC Space
+
+Cluster the original data:
+```{r}
+wisc.hclust <- hclust(dist(wisc.data))
+plot(wisc.hclust)
+
+```
+This dendrogram doesn't really give us any valuable information, because its so hard to read. So we will combine results of PCA with clustering
+```{r}
+wisc.pr.hclust <- hclust(dist(wisc.pr$x[,1:3]), method = "ward.D2")
+plot(wisc.pr.hclust)
+```
+```{r}
+grps3 <- cutree(wisc.pr.hclust, k=2)
+table(grps3)
+plot(wisc.pr$x[,1], wisc.pr$x[,2], col=grps3)
+```
+
+Use table() function to compare the $diagnosis vector with our cluster results vector.
+
+```{r}
+table(grps3, wisc.df$diagnosis)
+```
+In this table, we are basically taking the two clusters and seeing how many in each cluster are actually B or M according to the given data set. In cluster 1, it seems to be more representative of the malignant cells, so we have 179 true positives and 24 false positives. For the second cluster, it seems that most are benign, so 333 are true positives, and 33 are false positives. 
+
+## Prediction
+
+Read the new samples, and use predict function with the previous PCA model and the new data to predict.
+```{r}
+new <- read.csv("new_samples.csv")
+new
+npc <- predict(wisc.pr, newdata = new)
+npc
+```
+
+Draw the PCA plot again and add our new data:
+```{r}
+plot(wisc.pr$x[,1], wisc.pr$x[,2], col = wisc.df$diagnosis)
+points(npc[,1], npc[,2], col = "blue", pch = 15, cex =2)
+text(npc[,1], npc[,2], labels = c(1,2), col = "white")
+```
+
+
+
+
+
