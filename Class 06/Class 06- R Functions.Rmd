@@ -1,0 +1,277 @@
+---
+title: "Class 06: R Functions"
+author: "Varsha Rajesh"
+date: "1/23/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Functions
+
+This is for test1. 
+```{r}
+t1 <- read.table("test1.txt", sep = ",", header = TRUE)
+```
+
+Or, can use `read.csv()` which already has the above parameters/arguments.
+
+```{r}
+t1 <- read.csv("test1.txt")
+```
+
+This is for Test2.
+```{r}
+t2 <- read.table("test2.txt")
+```
+Character separation is a $ sign, so must specify in argument.
+```{r}
+t2 <- read.table("test2.txt", sep = "$", header = TRUE)
+```
+
+Test 3:
+```{r}
+t3 <- read.table("test3.txt")
+```
+
+
+First example function:
+```{r}
+add <- function(x,y=1) {
+  #Sum the input of x and y
+  x + y
+}
+```
+```{r}
+add(1,7)
+```
+
+```{r}
+add( c(1,4,5), c(3,-8,-5.6))
+```
+
+Second function:
+```{r}
+rescale <- function(x) {
+ rng <-range(x)
+ (x - rng[1]) / (rng[2] - rng[1])
+}
+```
+```{r}
+rescale(1:10)
+```
+```{r}
+rescale(c(1,2,NA,3,10))
+```
+```{r}
+rescale2 <- function(x) {
+  rng <- range(x, na.rm = TRUE)
+  (x-rng[1])/(rng[2] - rng [1])
+}
+```
+```{r}
+rescale2(c(1,2,NA,3,10))
+```
+
+
+```{r}
+rescale(c(1,10,"banana"))
+```
+```{r}
+rescale3 <- function(x, na.rm=TRUE, plot=FALSE) {
+  rng <-range(x, na.rm=na.rm)
+  print("Hello")
+  answer <- (x - rng[1]) / (rng[2] - rng[1])
+  print("is it me you are looking for?")
+  if(plot) {
+    plot(answer, typ="b", lwd=4)
+  }
+  print("I can see it in ...")
+  return(answer)
+}
+```
+
+```{r}
+rescale3(1:5, plot = FALSE)
+```
+
+A. Can you improve this analysis code? 
+```{r}
+df <- data.frame(a=1:10, b=seq(200,400,length=10),c=11:20,d=NA)
+df$a <- (df$a - min(df$a)) / (max(df$a) - min(df$a))
+df$b <- (df$b - min(df$a)) / (max(df$b) - min(df$b))
+df$c <- (df$c - min(df$c)) / (max(df$c) - min(df$c))
+df$d <- (df$d - min(df$d)) / (max(df$a) - min(df$d)) 
+```
+First line shows that we are subtracting the min from the vector a, and then dividing by the range of that vector (max-min).
+We can generalize this:
+```{r}
+a <- c(1:10)
+a <- (a - min(a)) / (max(a) - min(a))   #Same as first line, just generalized to first vector, a. We call min(a) twice, can condense.
+min_a <- min(a)
+a <- (a - min_a) / (max(a) - min_a)
+#Range function stores the min and max of a vector in a new vector with two elements.
+rng_a <- range(a)
+a <- (a - rng_a[1]) / (rng_a[2] - rng_a[1])
+```
+Now we can write a function for all the vectors of the dataframe df.
+```{r}
+rescale_r <- function(x) {
+  rng_x <- range(x, na.rm = TRUE)
+  x <- (x - rng_x[1]) / (rng_x[2] - rng_x[1])
+}
+```
+Now test rescale_r function on a vector of the data frame df. 
+```{r}
+a <- c(1:10)
+a <- rescale_r(a)
+a
+
+```
+Some of the vectors in data frame df have NA, so have to specify in range function to set na.rm = TRUE.
+```{r}
+b=seq(200,400,length=10)
+b <- rescale_r(b)
+b
+
+```
+
+##Worksheet
+#Section 1
+```{r}
+# Can you improve this analysis code?
+library(bio3d)
+s1 <- read.pdb("4AKE") # kinase with drug
+s2 <- read.pdb("1AKE") # kinase no drug
+s3 <- read.pdb("1E4Y") # kinase with drug
+```
+
+
+```{r}
+s1.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s2.chainA <- trim.pdb(s2, chain="A", elety="CA")
+s3.chainA <- trim.pdb(s3, chain="A", elety="CA")
+
+s1.b <- s1.chainA$atom$b
+s2.b <- s2.chainA$atom$b
+s3.b <- s3.chainA$atom$b
+
+plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
+plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
+```
+
+>Q1. What type of object is returned from `read.pdb()`?
+
+It is a large list of 8 pieces of information. 
+
+>Q2. What does trim.pdb() function do?
+
+It trims the protein file to certain aspects/subsets.
+
+>Q3. What input parameter would turn off the marginal black and grey rectangles in the plots and what do they represent in this case?
+
+No setting sse would get rid of those rectangles. 
+
+>Q4. What would be a better plot to compare to across the different proteins?
+
+>Q5. Which proteins are more similar in their B-factor trends?
+
+Can try rbind(), dist(). and hclust() with a dendrogram to see how similar each entry is to each other.
+```{r}
+hc <- hclust(dist(rbind(s1.b, s2.b, s3.b)))
+plot(hc)
+```
+
+>Q6. How would you generalize the above code to work with any set of input protein structures?
+
+```{r}
+library("bio3d")
+  readprotein <- function(x) {
+    p <- read.pdb(x)
+    p.chainA <- trim.pdb(p, chain = "A", elety = "CA")
+    p.b <- p.chainA$atom$b
+    plotb3(p.b, sse=p.chainA, typ ="l", ylab = "Bfactor")
+}
+```
+
+```{r}
+readprotein("4AKE")
+```
+
+#Section 2
+
+```{r}
+square.it <- function(x) {
+  square <- x * x
+  return(square)
+}
+```
+
+You can pass matrices or vectors in the function as well, and it will carry out function for all elements in the matrix/vector.
+```{r}
+matrix1 <- cbind(c(3,10), c(4,5))
+square.it(matrix1)
+```
+
+You use return() at the end of your function if you've saved the value of your statements into an object inside the function, which means the objecy is in the local environment and not the global one.
+```{r}
+fun1 <- function(x) {
+ 3 * x - 1
+}
+fun1(5)
+```
+```{r}
+## [1] 14
+fun2 <- function(x) {
+ y <- 3 * x - 1
+}
+fun2(5)
+```
+In the first one, we don't store the value in a variable, so it will immediately return the value. In the second one, we store it in a variable which has not been specified outside the function.So we have to include 'return(y)'
+
+#Section 3
+You can return multiple objects from a function by using list() to list them together.
+```{r}
+another.fun <- function(sq.matrix, vector) {
+  step1 <- t(sq.matrix)    # transpose matrix and square the vector
+  step2 <- vector * vector
+  final <- list(step1, step2) # save both results in a list and return
+  return(final)
+}
+# call the function and save result in object called outcome
+outcome <- another.fun(sq.matrix = cbind(c(1, 2), c(3, 4)),
+vector = c(2, 3))
+# print the outcome list
+print(outcome)
+```
+You can separate the objects in the list by extracting them using the [[]] operator.
+```{r}
+outcome[[1]]
+outcome[[2]]
+```
+
+#Section 4
+R has a built-in debugger called debug(), which shows you at which point in your function it stops because of errors. 
+
+You can use the stop() or stopifnot() to write your own error messages.
+```{r}
+my.second.fun <- function(matrix, vector) {
+ if (dim(matrix)[2] != length(vector)) {
+ stop("Can't multiply matrix%*%vector because the
+dimensions are wrong")
+ }
+ product <- matrix %*% vector
+ return(product)
+}
+```
+
+#Section 5
+Function writing practices:
+1) Keep functions short.
+2) Put in comments to explain every input, each step, and output.
+3) Check for errors along the way using debug or stop functions.
+
+

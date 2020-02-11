@@ -1,0 +1,23 @@
+---
+title: "Protein Q6"
+author: "Varsha Rajesh"
+date: "1/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(bio3d)                       #This is to call the bio3d package.
+  readprotein <- function(x) {       #Function is named readprotein, and requires one input (protein name).
+    p <- read.pdb(x)                 #First step is to read the protein file and store it in a new variable p.
+    p.chainA <- trim.pdb(p, chain = "A", elety = "CA")  #Second step is to trim the protein file to obtain Chain A and store it in a new variable, p.chainA.
+    p.b <- p.chainA$atom$b                              #Third step: Store the b atom of Chain A in a variable called p.b.
+    plotb3(p.b, sse=p.chainA, typ ="l", ylab = "Bfactor")  #Finally, plot the protein-drug interaction with plotb3 function, which takes in the b atom of Chain A as 
+}
+```
+
+
+

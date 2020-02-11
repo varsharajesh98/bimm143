@@ -1,0 +1,161 @@
+---
+title: "Class 09"
+author: "Varsha Rajesh"
+date: "2/4/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## K-means clustering in R
+```{r}
+# Generate some example data for clustering
+tmp <- c(rnorm(30,-3), rnorm(30,3)) #Plots 30 values randomly clustered around -3, and another 30 around +3. 
+x <- cbind(x=tmp, y=rev(tmp))  #Binds x and y by column. Rev reverses a vector. So here, we are taking the tmp vector and using it as a column for a new data frame, and then reversing it to make a new second column. Then we can plot a cluster at -3, +3, and one at +3, -3 -> this turns it from one dimensional to two dimensional.
+plot(x)
+
+kcluster <- kmeans(x, centers = 2, nstart = 20)
+kcluster
+kcluster$cluster
+kcluster$size
+```
+
+Q. How many points are in each cluster?
+There are 30 points in cluster 1, and 30 points in cluster 2.
+
+Q. What ‘component’ of your result object details
+ - cluster size?
+kcluster$size
+ - cluster assignment/membership?
+kcluster$cluster
+ - cluster center?
+kcluster$centers
+ 
+ 
+Plot x colored by the kmeans cluster assignment and
+ add cluster centers as blue points
+```{r}
+plot(x, col = kcluster$cluster)
+points(kcluster$center, col = 4, pch = 10, cex = 1.5 )
+```
+By setting the color to the cluster vector, we can differentially label the clusters by color. If you just set color to a number, it will color all the dots. We can also use points function to pick out specific points that we can call with $ and edit those specifically. 
+
+## Hierarchical Clustering in R
+
+The main hierarchical clustering function is hclust(). You have to calculate the distance matrix from the input data before calling hclust().
+```{r}
+d <- dist(x)
+hc <- hclust(d)
+hc
+plot(hc)
+
+```
+The dist() function computes the distance matrix for the input data. 
+The crossbars of the branches are equal to the distance between the two points. The farther the points are, the longer the branches are (greater branch height on the dendrogram).
+```{r}
+plot(hc)
+abline(h=6, col = "red")
+cutree(hc, h =6)
+abline(h=4, col = "blue")
+cutree(hc, h=4)
+```
+The abline sets a threshold at which we can cut the tree and create various clusters. If we set h = 6, then we create three dangling branches/clusters. The cutree() function returns a vector that shows you the components of each cluster, just like cluster component for kmeans(). If we set h = 4, we get 5 clusters. 
+
+How to set a cutoff? The higher the crossbar, the more separated it is, so you want to make sure you are cutting at a place where its really high and not really short, that means you are separating points that are actually part of the same cluster. 
+```{r}
+gp4 <- cutree(hc, k = 4)
+table(gp4)
+```
+Here, you can also set k to something to specify how  many clusters you want, and it will establish a threshold for you that will make sure you get 4 clusters (you don't have to specify, which helps for cases where its hard to tell how to get a certain amount of clusters).
+
+Step 1. Generate some example data for clustering
+```{r}
+x <- rbind(
+ matrix(rnorm(100, mean=0, sd = 0.3), ncol = 2), # c1
+ matrix(rnorm(100, mean = 1, sd = 0.3), ncol = 2), # c2
+ matrix(c(rnorm(50, mean = 1, sd = 0.3), # c3
+ rnorm(50, mean = 0, sd = 0.3)), ncol = 2))
+colnames(x) <- c("x", "y")
+```
+
+Step 2. Plot the data without clustering
+```{r}
+plot(x)
+```
+
+Step 3. Generate colors for known clusters
+(just so we can compare to hclust results)
+```{r}
+col <- as.factor( rep(c("c1","c2","c3"), each=50) )
+plot(x, col=col)
+```
+
+Q. Use the dist(), hclust(), plot() and cutree()
+ functions to return 2 and 3 clusters
+```{r}
+hc <- hclust(dist(x))
+plot(hc)
+abline(h = 2.05, col = "red")
+```
+
+```{r}
+grps <- cutree(hc, k = 3)
+plot(x, col = grps)
+```
+We plotted x (our data set) and we set the color to be dictated by the cutree function run on our dataset. 
+Q. How does this compare to your known 'col' groups?
+
+##Principal Component Analysis
+
+```{r}
+x <- read.csv("UK_foods.csv", row.names = 1)
+nrow(x)
+ncol(x)
+```
+```{r}
+barplot(as.matrix(x), beside=T, col=rainbow(nrow(x)))
+```
+
+```{r}
+pairs(x, col=rainbow(10), pch=16)
+```
+
+
+```{r}
+# Use the prcomp() PCA function 
+pca <- prcomp(t(x))
+pca
+```
+t() takes the transpose of the data so it makes the columns into rows or vice versa. 
+
+```{r}
+attributes(pca)
+#this function shows what attributes are available with the pca object.
+```
+```{r}
+plot(pca$x[,1], pca$x[,2])
+text(pca$x[,1], pca$x[,2], colnames(x))
+```
+This PCA plot shows that one of the countries is very different from the other three in terms of PCA1 (x-axis). 
+```{r}
+summary(pca)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
