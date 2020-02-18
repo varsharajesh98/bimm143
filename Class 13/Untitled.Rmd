@@ -7,3 +7,30 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Download and clean HIV-Pr receptor structure
+First we download the 1HSG PDB structure from the online database, remove the bound drug from Merck and separate into two new files - one for protein only and one for ligand only. 
+```{r}
+library(bio3d)
+hsg <- get.pdb("1hsg")
+hiv <- read.pdb(hsg)
+hiv
+```
+>Q1. What is name of two non-protein resid values in the structure? What does resid correspond to and how would you get a listing of all resid values in this structure?
+
+
+
+File we downloaded (1hsg.pdb) contains protein, ligand, and water atoms. So we have to extract the protein atoms only.
+
+Select the protein atoms only with atom.select(). trim.pdb() will perform a similar function. Do the same for the ligand atoms only. Use write.pdb() function to make new files with just these atoms.
+```{r}
+prot <- atom.select(hiv, "protein", value = TRUE)
+write.pdb(prot, file = "1hsg_prot.pdb")
+lig <- atom.select(hiv, "ligand", value = TRUE)
+write.pdb(lig, file = "1hsg_lig.pdb")
+prot
+lig
+```
+
+
+
+
